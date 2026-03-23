@@ -12,7 +12,6 @@ public:
     virtual ~Sequence() = default;
      
     virtual Sequence<T>* Instance() = 0;
-    virtual const Sequence<T>* Instance() const = 0;
     
     Sequence<T>* Append(T item) {
         Sequence<T>* target = Instance();
