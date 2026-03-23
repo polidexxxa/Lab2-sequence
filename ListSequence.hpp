@@ -38,9 +38,6 @@ public:
         return this;
     }
     
-    const Sequence<T>* Instance() const override { 
-        return this;
-    }
 
     ListSequence<T>& operator=(const ListSequence<T>& other) {
         if (this != &other) {
@@ -274,7 +271,6 @@ public:
     }
 
     Sequence<T>* Instance() override { return this; }
-    const Sequence<T>* Instance() const override { return this; }
     
     MutableListSequence<T>* Set(int index, T value) {
         (*this)[index] = value;
@@ -304,7 +300,6 @@ public:
     }
 
     Sequence<T>* Instance() override { return this->Clone(); }
-    const Sequence<T>* Instance() const override { return this->Clone(); }
     
     T& operator[](int index) override {
         throw UnsupportedOperationException("Immutable sequence does not support mutable iterators");
