@@ -155,7 +155,6 @@ public:
     }
 
     Sequence<Bit>* Instance() override { return this; }
-    const Sequence<Bit>* Instance() const override { return this; }
 
     Sequence<Bit>* Clone() const override {
         return new BitSequence(*this);
