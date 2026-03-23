@@ -36,10 +36,6 @@ public:
     Sequence<T>* Instance() override { 
         return this;
     }
-    
-    const Sequence<T>* Instance() const override { 
-        return this;
-    }
 
     ArraySequence<T>& operator=(const ArraySequence<T>& other) {
         if (this != &other) {
@@ -323,7 +319,6 @@ public:
     MutableArraySequence() : ArraySequence<T>() {}
 
     Sequence<T>* Instance() override { return this; }
-    const Sequence<T>* Instance() const override { return this; }
 
     MutableArraySequence(const MutableArraySequence<T>& other) 
         : ArraySequence<T>(other) {}
@@ -360,9 +355,6 @@ public:
         return this->Clone(); 
     }
     
-    const Sequence<T>* Instance() const override { 
-        return this->Clone(); 
-    }
 
     Sequence<T>* Clone() const override {
         return new ImmutableArraySequence<T>(*this);
