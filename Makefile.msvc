@@ -1,0 +1,32 @@
+CXX = cl
+CXXFLAGS = /EHsc /std:c++17 /W3 /O2
+
+all: main.exe tests.exe demos.exe
+
+main.exe: main.cpp
+	$(CXX) $(CXXFLAGS) /Femain.exe main.cpp
+
+tests.exe: Tests.cpp
+	$(CXX) $(CXXFLAGS) /Fetests.exe Tests.cpp
+
+demos.exe: demos.cpp
+	$(CXX) $(CXXFLAGS) /Fedemos.exe demos.cpp
+
+run: main.exe
+	main.exe
+
+test: tests.exe
+	tests.exe
+
+demo: demos.exe
+	demos.exe
+
+clean:
+	if exist *.exe del /Q *.exe
+	if exist *.obj del /Q *.obj
+	if exist *.pdb del /Q *.pdb
+	if exist *.ilk del /Q *.ilk
+
+rebuild: clean all
+
+.PHONY: all run test demo clean rebuild
