@@ -22,9 +22,6 @@ nmake /f Makefile.msvc clean
 ### Собрать всё
 make
 
-### Собрать только main
-make main
-
 ### Запустить main
 make run
 
@@ -36,6 +33,3 @@ make demo
 
 ### Очистить
 make clean
-
-### Пересобрать
-make rebuild
