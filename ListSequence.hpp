@@ -1,4 +1,4 @@
-#ifndef _LISTSEQUENSE_HPP_
+#ifndef _LISTSEQUENCE_HPP_
 #define _LISTSEQUENCE_HPP_
 
 #include "Sequence.hpp"
