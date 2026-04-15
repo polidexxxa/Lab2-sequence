@@ -33,7 +33,7 @@ public:
         
         MinMaxAvgResult<T> result;
 
-        result = const_cast<ArraySequence<T>&>(seq).Reduce<MinMaxAvgResult<T>>(
+        result = const_cast<ArraySequence<T>&>(seq).template Reduce<MinMaxAvgResult<T>>(
             MinMaxAvgResult<T>{first, first, 0.0, 0},
             [](const MinMaxAvgResult<T>& acc, const T& x) -> MinMaxAvgResult<T> {
                 return MinMaxAvgResult<T>{
