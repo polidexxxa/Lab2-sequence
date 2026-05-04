@@ -60,9 +60,10 @@ private:
         const BitSequence* seq;
         int idx;
         bool isConst;
+        Bit currentBit;
 
     public:
-        BitEnumerator(const BitSequence* s, bool isConst = false) : seq(s), idx(-1), isConst(isConst) {
+        BitEnumerator(const BitSequence* s, bool isConst = false) : seq(s), idx(-1), isConst(isConst), currentBit(false) {
             if (s == nullptr) {
                 throw InvalidArgumentException("BitEnumerator: sequence cannot be null");
             }
@@ -72,26 +73,39 @@ private:
             return new BitEnumerator(*this); 
         }
 
-        bool MoveNext() override { 
+        bool MoveNext() override {
             if (seq == nullptr) return false;
-            return ++idx < seq->GetLength(); 
+            idx++;
+            if (idx < seq->GetLength()) {
+                currentBit = seq->Get(idx); 
+                return true;
+            }
+            return false;
         }
 
         const Bit& GetCurrent() const override {
             if (seq == nullptr) {
                 throw InvalidArgumentException("Enumerator is not attached to a sequence");
             } 
-            return (*seq)[idx]; 
+            return currentBit; 
         }
 
         Bit& GetCurrent() override {
-            throw UnsupportedOperationException("BitSequence doesn't support mutable enumeration"); 
+            if (seq == nullptr || idx < 0 || idx >= seq->GetLength()) {
+                throw InvalidArgumentException("Enumerator is not attached to a sequence");
+            }
+            return currentBit; 
         }
 
         void Reset() override {
             idx = -1; 
         }
     };
+
+protected:
+    Sequence<Bit>* CreateEmptySameType() const override {
+        return new BitSequence();
+    }
 
 public:
     BitSequence() : data(nullptr), bitCount(0), byteCount(0) {}
@@ -182,7 +196,7 @@ public:
         return bitCount;
     }
     
-    void AppendInternal(Bit item) override {
+    void AppendInternal(const Bit& item) override {
         int newBitCount = bitCount + 1;
         int newByteCount = (newBitCount + 7) / 8;
         
@@ -198,7 +212,7 @@ public:
         setBit(bitCount - 1, static_cast<bool>(item));
     }
 
-    void PrependInternal(Bit item) override {
+    void PrependInternal(const Bit& item) override {
         int newBitCount = bitCount + 1;
         int newByteCount = (newBitCount + 7) / 8;
         
@@ -219,7 +233,7 @@ public:
         byteCount = newByteCount;
     }
 
-    void InsertAtInternal(Bit item, int index) override {
+    void InsertAtInternal(const Bit& item, int index) override {
         if (index < 0 || index > bitCount) {
             throw IndexOutOfRangeException("Index out of range");
         }
@@ -246,50 +260,15 @@ public:
         bitCount = newBitCount;
         byteCount = newByteCount;
     }
-    
-    Sequence<Bit>* GetSubsequence(int startIndex, int endIndex) const override {
-        if (startIndex < 0 || startIndex >= bitCount ||
-            endIndex < 0 || endIndex >= bitCount ||
-            startIndex > endIndex) {
-            throw IndexOutOfRangeException("Invalid subsequence indices");
-        }
-        
-        int newSize = endIndex - startIndex + 1;
-        Bit* temp = new Bit[newSize];
-        
-        for (int i = 0; i < newSize; ++i) {
-            temp[i] = Bit(getBit(startIndex + i));
-        }
-        
-        BitSequence* result = new BitSequence(temp, newSize);
-        delete[] temp;
-        return result;
+
+    void SetInternal(int index, const Bit& item) override {
+        setBit(index, static_cast<bool>(item));
     }
 
-    Sequence<Bit>* Concat(Sequence<Bit>* other) const override {
-        if (other == nullptr) {
-            throw InvalidArgumentException("Cannot concatenate with null sequence");
-        }
-        
-        int thisSize = this->GetLength();
-        int otherSize = other->GetLength();
-        int newSize = thisSize + otherSize;
-        
-        Bit* temp = new Bit[newSize];
-        
-        for (int i = 0; i < thisSize; ++i) {
-            temp[i] = this->Get(i);
-        }
-        
-        for (int i = 0; i < otherSize; ++i) {
-            temp[thisSize + i] = other->Get(i);
-        }
-        
-        BitSequence* result = new BitSequence(temp, newSize);
-        delete[] temp;
-        return result;
-    }
+    Sequence<Bit>* Where(std::function<bool(const Bit&)> predicate) const = delete;
 
+    template<typename Accumulator>
+    Accumulator Reduce(const Accumulator& initial, std::function<Accumulator(Accumulator, const Bit&)> func) const = delete;
 
     BitSequence And(const BitSequence& other) const {
         if (this->GetLength() != other.GetLength()) {
@@ -354,33 +333,6 @@ public:
         return result;
     }
 
-
-    Option<Bit> TryGetFirst() const {
-        if (bitCount == 0) {
-            return Option<Bit>();
-        }
-        return Option<Bit>(Bit(getBit(0)));
-    }
-    
-    Option<Bit> TryGetLast() const {
-        if (bitCount == 0) {
-            return Option<Bit>();
-        }
-        return Option<Bit>(Bit(getBit(bitCount - 1)));
-    }
-    
-    Option<Bit> TryFind(std::function<bool(const Bit&)> predicate) const {
-        for (int i = 0; i < bitCount; ++i) {
-            Bit b(getBit(i));
-            if (predicate(b)) {
-                return Option<Bit>(b);
-            }
-        }
-        return Option<Bit>();
-    }
-
-
-
     const Bit& operator[](int index) const override {
         return getBit(index) ? Bit::BIT1 : Bit::BIT0;
     }
@@ -406,58 +358,11 @@ public:
         return Not();
     }
 
-
-    Sequence<Bit>* Slice(int start, int count, Sequence<Bit>* replacement = nullptr) const override {
-        int length = this->GetLength();
-
-        if (start < 0) {
-            start = length + start;
-        }
-
-        if (start < 0 || start >= length) {
-            throw IndexOutOfRangeException(
-                "Start index " + std::to_string(start) + " out of range [0, " + 
-                std::to_string(length) + ")"
-            );
-        }
-        
-        if (count < 0) {
-            throw InvalidArgumentException("Count cannot be negative");
-        }
-        
-        if (start + count > length) {
-            count = length - start;
-        }
-        
-        int replacementSize = (replacement == nullptr) ? 0 : replacement->GetLength();
-        int newSize = length - count + replacementSize;
-        
-        Bit* temp = new Bit[newSize];
-        int pos = 0;
-        
-        for (int i = 0; i < start; i++) {
-            temp[pos++] = this->Get(i);
-        }
-        
-        if (replacement != nullptr) {
-            for (int i = 0; i < replacement->GetLength(); i++) {
-                temp[pos++] = replacement->Get(i);
-            }
-        }
-        
-        for (int i = start + count; i < length; i++) {
-            temp[pos++] = this->Get(i);
-        }
-        
-        auto* result = new BitSequence(temp, newSize);
-        delete[] temp;
-        return result;
-    }
-
-
     IEnumerator<Bit>* GetEnumerator() const override {
         return new BitEnumerator(this, true);
     }
+
+
     
 };
 

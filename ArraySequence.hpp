@@ -7,10 +7,16 @@
 #include "Exceptions.hpp"
 #include <functional>
 
+//Mutable
 template<typename T>
 class ArraySequence : public Sequence<T> {
 private:
     DynamicArray<T>* items;
+
+protected:
+    Sequence<T>* CreateEmptySameType() const override {
+        return new ArraySequence<T>();
+    }
 
 public:
     ArraySequence(T* items, int count) {
@@ -45,13 +51,13 @@ public:
         return *this;
     }
 
-    void AppendInternal(T item) override {
+    void AppendInternal(const T& item) override {
         int oldSize = items->GetSize();
         items->Resize(oldSize + 1);
         items->Set(oldSize, item);
     }
 
-    void PrependInternal(T item) override {
+    void PrependInternal(const T& item) override {
         int oldSize = items->GetSize();
         items->Resize(oldSize + 1);
 
@@ -61,7 +67,7 @@ public:
         items->Set(0, item);
     }
 
-    void InsertAtInternal(T item, int index) override {
+    void InsertAtInternal(const T& item, int index) override {
         if (index < 0 || index > items->GetSize()) {
             throw IndexOutOfRangeException("Index out of range for insertion");
         }
@@ -72,6 +78,10 @@ public:
         for (int i = oldSize; i > index; i--) {
             items->Set(i, items->Get(i - 1));
         }
+        items->Set(index, item);
+    }
+
+    void SetInternal(int index, const T& item) override {
         items->Set(index, item);
     }
 
@@ -97,51 +107,9 @@ public:
         return items->GetSize();
     }
 
-
-    Sequence<T>* GetSubsequence(int startIndex, int endIndex) const override {
-        DynamicArray<T>* subArray = items->GetSubArray(startIndex, endIndex);
-        
-        ArraySequence<T>* subsequence = new ArraySequence<T>(*subArray);
-
-        delete subArray;
-        return subsequence;
-    }
-
-    Sequence<T>* Concat(Sequence<T>* other) const override {
-        if (other == nullptr) {
-            throw InvalidArgumentException("Cannot concatenate with null sequence");
-        }
-
-        int thisSize = this->GetLength();
-        int otherSize = other->GetLength();
-        int newSize = thisSize + otherSize;
-        
-        T* tempArray = new T[newSize];
-        
-        int pos = 0;
-
-        IEnumerator<T>* enum1 = this->GetEnumerator();
-        while (enum1->MoveNext()) {
-            tempArray[pos++] = enum1->GetCurrent();
-        }
-        delete enum1;
-
-        IEnumerator<T>* enum2 = other->GetEnumerator();
-        while (enum2->MoveNext()) {
-            tempArray[pos++] = enum2->GetCurrent();
-        }
-        delete enum2;
-        
-        ArraySequence<T>* result = new ArraySequence<T>(tempArray, newSize);
-        delete[] tempArray;
-        return result;
-    }
-
     const DynamicArray<T>& GetInternalArray() const {
         return *items;
     }
-
-
 
     template<typename ResultType>
     Sequence<ResultType>* Map(std::function<ResultType(const T&)> func) const {
@@ -158,138 +126,9 @@ public:
         return result;
     }
 
-    Sequence<T>* Where(std::function<bool(const T&)> predicate) const {
-        int count = 0;
-        for (int i = 0; i < this->GetLength(); i++) {
-            if (predicate(this->Get(i))) {
-                count++;
-            }
-        }
-
-        if (count == 0) {
-            return new ArraySequence<T>();
-        }
-        
-        T* temp = new T[count];
-        int index = 0;
-        IEnumerator<T>* enumerator = this->GetEnumerator();
-        while (enumerator->MoveNext()) {
-            T val = enumerator->GetCurrent();
-            if (predicate(val)) {
-                temp[index++] = val;
-            }
-        }
-        delete enumerator;
-        
-        ArraySequence<T>* result = new ArraySequence<T>(temp, count);
-        delete[] temp;
-        return result;
-    }
-
-    template<typename Accumulator>
-    Accumulator Reduce(Accumulator initial, std::function<Accumulator(Accumulator, const T&)> func) const {
-        Accumulator result = initial;
-
-        IEnumerator<T>* enumerator = this->GetEnumerator();
-        while (enumerator->MoveNext()) {
-            result = func(result, enumerator->GetCurrent());
-        }
-        delete enumerator;
-
-        return result;
-    }
-
-
-    Option<T> TryFind(std::function<bool(const T&)> predicate) const override {
-        for (int i = 0; i < this->GetLength(); i++) {
-            T val = this->Get(i);
-            if (predicate(val)) {
-                return Option<T>(val);
-            }
-        }
-        return Option<T>();
-    }
-    
-    Option<T> TryGetFirst() const override {
-        if (this->GetLength() == 0) {
-            return Option<T>();
-        }
-        return Option<T>(this->GetFirst());
-    }
-    
-    Option<T> TryGetLast() const override {
-        if (this->GetLength() == 0) {
-            return Option<T>();
-        }
-        return Option<T>(this->GetLast());
-    }
-
-
-
     Sequence<T>* Clone() const override {
         return new ArraySequence<T>(*items);
     }
-
-
-    Sequence<T>* Slice(int start, int count, Sequence<T>* replacement = nullptr) const override{
-        int length = this->GetLength();
-
-        if (start < 0) {
-            start = length + start;
-        }
-
-        if (start < 0 || start >= length) {
-            throw IndexOutOfRangeException("Start index out of range");
-        }
-
-        if (count < 0) {
-            throw InvalidArgumentException("Count cannot be negative");
-        }
-
-        if (start + count > length) {
-            count = length - start;
-        }
-
-        int replacementSize = (replacement == nullptr) ? 0 : replacement->GetLength();
-        int newSize = length - count + replacementSize;
-
-        T* temp = new T[newSize];
-        int pos = 0;
-        int index = 0;
-
-        IEnumerator<T>* enumerator = this->GetEnumerator();
-
-        while (enumerator->MoveNext() && index < start) {
-            temp[pos++] = enumerator->GetCurrent();
-            index++;
-        }
-
-        for (int i = 1; i < count && enumerator->MoveNext(); i++) {
-            index++;
-        }
-
-        if (replacement != nullptr) {
-            IEnumerator<T>* replEnum = replacement->GetEnumerator();
-            while (replEnum->MoveNext()) {
-                temp[pos++] = replEnum->GetCurrent();
-            }
-            delete replEnum;
-        }
-
-        while (enumerator->MoveNext()) {
-            temp[pos++] = enumerator->GetCurrent();
-        }
-
-        delete enumerator;
-
-        auto* result = new ArraySequence<T>(temp, newSize);
-        delete[] temp;
-        return result;
-
-    }
-
-
-
 
     T& operator[](int index) override {
         return items->GetRef(index);
@@ -303,36 +142,6 @@ public:
         return new ArrayEnumerator<T>(items);
     }
 
-};
-
-
-//=============================================================================
-//                                  MUTABLE
-//=============================================================================
-
-
-template<typename T>
-class MutableArraySequence : public ArraySequence<T> {
-public:
-    using ArraySequence<T>::ArraySequence;
-
-    MutableArraySequence() : ArraySequence<T>() {}
-
-    Sequence<T>* Instance() override { return this; }
-
-    MutableArraySequence(const MutableArraySequence<T>& other) 
-        : ArraySequence<T>(other) {}
-
-    Sequence<T>* Clone() const override {
-        return new MutableArraySequence<T>(*this);
-    }
-
-    MutableArraySequence<T>* Set(int index, T value) {
-        (*this)[index] = value;
-        return this;
-    }
-
-    using ArraySequence<T>::operator[];
 
 };
 
@@ -340,9 +149,13 @@ public:
 //                              IMMUTABLE
 //=============================================================================
 
-
 template<typename T>
 class ImmutableArraySequence : public ArraySequence<T> {
+protected:
+    Sequence<T>* CreateEmptySameType() const override {
+        return new ImmutableArraySequence<T>();
+    }
+
 public:
     using ArraySequence<T>::ArraySequence;
 

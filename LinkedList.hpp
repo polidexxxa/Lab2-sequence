@@ -143,7 +143,7 @@ public:
         return length;
     }
 
-    void Append(T item) {
+    void Append(const T& item) {
         Node* newNode = new Node(item, nullptr, tail);
 
         if (length == 0) {
@@ -157,7 +157,7 @@ public:
         length++;
     }
 
-    void Prepend(T item) {
+    void Prepend(const T& item) {
         Node* newNode = new Node(item, head, nullptr);
 
         if (length == 0) {
@@ -171,7 +171,7 @@ public:
         length++;
     }
 
-    void InsertAt(T item, int index) {
+    void InsertAt(const T& item, int index) {
         if (index < 0 || index > length) {
             throw IndexOutOfRangeException("Index " + std::to_string(index) + " out of range [0, " + std::to_string(length) + "]");
         }
@@ -203,8 +203,6 @@ public:
         
         return result;
     }
-
-
 
     T& GetRef(int index) {
         Node* current = getNodeAt(index);

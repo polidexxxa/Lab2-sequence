@@ -148,7 +148,7 @@ private:
         printHeader("MutableArraySequence Demonstration");
         
         int data[] = {1, 2, 3, 4, 5};
-        MutableArraySequence<int> seq(data, 5);
+        ArraySequence<int> seq(data, 5);
         
         std::cout << "Original: ";
         printSequence(&seq, "seq");
@@ -223,7 +223,7 @@ private:
         printHeader("MutableListSequence Demonstration");
         
         int data[] = {10, 20, 30, 40, 50};
-        MutableListSequence<int> seq(data, 5);
+        ListSequence<int> seq(data, 5);
         
         std::cout << "Original: ";
         printSequence(&seq, "seq");
@@ -342,7 +342,7 @@ private:
         printHeader("Additional Tasks (P-1, P-6, P-8)");
         
         int data[] = {5, 2, 8, 1, 9, 3, 7, 4, 6};
-        MutableArraySequence<int> seq(data, 9);
+        ArraySequence<int> seq(data, 9);
         
         std::cout << "Sequence: ";
         for (int i = 0; i < seq.GetLength(); ++i) std::cout << seq[i] << " ";

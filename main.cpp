@@ -6,15 +6,13 @@
 #include <cstdlib>
 #include <ctime>
 
-// ============================================================================
-//                           CONSOLE USER INTERFACE
-// ============================================================================
+//консольный ui
 
 class ConsoleUI {
 private:
     // Текущие объекты для работы
-    MutableArraySequence<int>* currentArraySeq;
-    MutableListSequence<int>* currentListSeq;
+    ArraySequence<int>* currentArraySeq;
+    ListSequence<int>* currentListSeq;
     BitSequence* currentBitSeq;
     ImmutableArraySequence<int>* currentImmutableArraySeq;
     ImmutableListSequence<int>* currentImmutableListSeq;
@@ -152,15 +150,15 @@ private:
         if (choice == 1) {
             int size;
             int* arr = readArray(size);
-            currentArraySeq = new MutableArraySequence<int>(arr, size);
+            currentArraySeq = new ArraySequence<int>(arr, size);
             delete[] arr;
         } else if (choice == 2) {
             int size;
             int* arr = generateRandomArray(size);
-            currentArraySeq = new MutableArraySequence<int>(arr, size);
+            currentArraySeq = new ArraySequence<int>(arr, size);
             delete[] arr;
         } else {
-            currentArraySeq = new MutableArraySequence<int>();
+            currentArraySeq = new ArraySequence<int>();
         }
         std::cout << "Sequence created!\n";
         printSequence(currentArraySeq, "Current");
@@ -180,15 +178,15 @@ private:
         if (choice == 1) {
             int size;
             int* arr = readArray(size);
-            currentListSeq = new MutableListSequence<int>(arr, size);
+            currentListSeq = new ListSequence<int>(arr, size);
             delete[] arr;
         } else if (choice == 2) {
             int size;
             int* arr = generateRandomArray(size);
-            currentListSeq = new MutableListSequence<int>(arr, size);
+            currentListSeq = new ListSequence<int>(arr, size);
             delete[] arr;
         } else {
-            currentListSeq = new MutableListSequence<int>();
+            currentListSeq = new ListSequence<int>();
         }
         std::cout << "Sequence created!\n";
         printSequence(currentListSeq, "Current");
