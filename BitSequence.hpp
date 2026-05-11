@@ -107,6 +107,75 @@ protected:
         return new BitSequence();
     }
 
+    void AppendInternal(const Bit& item) override {
+        int newBitCount = bitCount + 1;
+        int newByteCount = (newBitCount + 7) / 8;
+        
+        if (newByteCount > byteCount) {
+            unsigned char* newData = new unsigned char[newByteCount]();
+            for (int i = 0; i < byteCount; i++) newData[i] = data[i];
+            delete[] data;
+            data = newData;
+            byteCount = newByteCount;
+        }
+        
+        bitCount = newBitCount;
+        setBit(bitCount - 1, static_cast<bool>(item));
+    }
+
+    void PrependInternal(const Bit& item) override {
+        int newBitCount = bitCount + 1;
+        int newByteCount = (newBitCount + 7) / 8;
+        
+        unsigned char* newData = new unsigned char[newByteCount]();
+        
+        for (int i = 0; i < bitCount; i++) {
+            if (getBit(i)) {
+                int newIdx = i + 1;
+                newData[newIdx / 8] |= (1 << (newIdx % 8));
+            }
+        }
+        
+        if (static_cast<bool>(item)) newData[0] |= 1;
+        
+        delete[] data;
+        data = newData;
+        bitCount = newBitCount;
+        byteCount = newByteCount;
+    }
+
+    void InsertAtInternal(const Bit& item, int index) override {
+        if (index < 0 || index > bitCount) {
+            throw IndexOutOfRangeException("Index out of range");
+        }
+        if (index == bitCount) { AppendInternal(item); return; }
+        if (index == 0) { PrependInternal(item); return; }
+        
+        int newBitCount = bitCount + 1;
+        int newByteCount = (newBitCount + 7)/8;
+        unsigned char* newData = new unsigned char[newByteCount]();
+        
+        for (int i = 0; i < index; i++) {
+            if (getBit(i)) newData[i/8] |= (1 << (i%8));
+        }
+        if (static_cast<bool>(item)) newData[index/8] |= (1 << (index%8));
+        for (int i = index; i < bitCount; i++) {
+            if (getBit(i)) {
+                int newIdx = i + 1;
+                newData[newIdx/8] |= (1 << (newIdx%8));
+            }
+        }
+        
+        delete[] data;
+        data = newData;
+        bitCount = newBitCount;
+        byteCount = newByteCount;
+    }
+
+    void SetInternal(int index, const Bit& item) override {
+        setBit(index, static_cast<bool>(item));
+    }
+
 public:
     BitSequence() : data(nullptr), bitCount(0), byteCount(0) {}
 
@@ -196,75 +265,6 @@ public:
         return bitCount;
     }
     
-    void AppendInternal(const Bit& item) override {
-        int newBitCount = bitCount + 1;
-        int newByteCount = (newBitCount + 7) / 8;
-        
-        if (newByteCount > byteCount) {
-            unsigned char* newData = new unsigned char[newByteCount]();
-            for (int i = 0; i < byteCount; i++) newData[i] = data[i];
-            delete[] data;
-            data = newData;
-            byteCount = newByteCount;
-        }
-        
-        bitCount = newBitCount;
-        setBit(bitCount - 1, static_cast<bool>(item));
-    }
-
-    void PrependInternal(const Bit& item) override {
-        int newBitCount = bitCount + 1;
-        int newByteCount = (newBitCount + 7) / 8;
-        
-        unsigned char* newData = new unsigned char[newByteCount]();
-        
-        for (int i = 0; i < bitCount; i++) {
-            if (getBit(i)) {
-                int newIdx = i + 1;
-                newData[newIdx / 8] |= (1 << (newIdx % 8));
-            }
-        }
-        
-        if (static_cast<bool>(item)) newData[0] |= 1;
-        
-        delete[] data;
-        data = newData;
-        bitCount = newBitCount;
-        byteCount = newByteCount;
-    }
-
-    void InsertAtInternal(const Bit& item, int index) override {
-        if (index < 0 || index > bitCount) {
-            throw IndexOutOfRangeException("Index out of range");
-        }
-        if (index == bitCount) { AppendInternal(item); return; }
-        if (index == 0) { PrependInternal(item); return; }
-        
-        int newBitCount = bitCount + 1;
-        int newByteCount = (newBitCount + 7)/8;
-        unsigned char* newData = new unsigned char[newByteCount]();
-        
-        for (int i = 0; i < index; i++) {
-            if (getBit(i)) newData[i/8] |= (1 << (i%8));
-        }
-        if (static_cast<bool>(item)) newData[index/8] |= (1 << (index%8));
-        for (int i = index; i < bitCount; i++) {
-            if (getBit(i)) {
-                int newIdx = i + 1;
-                newData[newIdx/8] |= (1 << (newIdx%8));
-            }
-        }
-        
-        delete[] data;
-        data = newData;
-        bitCount = newBitCount;
-        byteCount = newByteCount;
-    }
-
-    void SetInternal(int index, const Bit& item) override {
-        setBit(index, static_cast<bool>(item));
-    }
-
     Sequence<Bit>* Where(std::function<bool(const Bit&)> predicate) const = delete;
 
     template<typename Accumulator>

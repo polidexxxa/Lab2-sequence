@@ -3,7 +3,6 @@
 
 #include "Sequence.hpp"
 #include "DynamicArray.hpp"
-#include "Option.hpp"
 #include "Exceptions.hpp"
 #include <functional>
 
@@ -16,39 +15,6 @@ private:
 protected:
     Sequence<T>* CreateEmptySameType() const override {
         return new ArraySequence<T>();
-    }
-
-public:
-    ArraySequence(T* items, int count) {
-        this->items = new DynamicArray<T>(items, count);
-    }
-
-    ArraySequence() {
-        this->items = new DynamicArray<T>(0);
-    }
-
-    explicit ArraySequence(const DynamicArray<T>& array) {
-        this->items = new DynamicArray<T>(array);
-    }
-
-    ArraySequence(const ArraySequence<T>& other) {
-        this->items = new DynamicArray<T>(*(other.items));
-    }
-
-    ~ArraySequence() override {
-        delete items;
-    }
-
-    Sequence<T>* Instance() override { 
-        return this;
-    }
-
-    ArraySequence<T>& operator=(const ArraySequence<T>& other) {
-        if (this != &other) {
-            delete items;
-            items = new DynamicArray<T>(*(other.items));
-        }
-        return *this;
     }
 
     void AppendInternal(const T& item) override {
@@ -83,6 +49,39 @@ public:
 
     void SetInternal(int index, const T& item) override {
         items->Set(index, item);
+    }
+    
+public:
+    ArraySequence(T* items, int count) {
+        this->items = new DynamicArray<T>(items, count);
+    }
+
+    ArraySequence() {
+        this->items = new DynamicArray<T>(0);
+    }
+
+    explicit ArraySequence(const DynamicArray<T>& array) {
+        this->items = new DynamicArray<T>(array);
+    }
+
+    ArraySequence(const ArraySequence<T>& other) {
+        this->items = new DynamicArray<T>(*(other.items));
+    }
+
+    ~ArraySequence() override {
+        delete items;
+    }
+
+    Sequence<T>* Instance() override { 
+        return this;
+    }
+
+    ArraySequence<T>& operator=(const ArraySequence<T>& other) {
+        if (this != &other) {
+            delete items;
+            items = new DynamicArray<T>(*(other.items));
+        }
+        return *this;
     }
 
     T GetFirst() const override {

@@ -3,8 +3,6 @@
 #include "BitSequence.hpp"
 #include "ExtraTasks.hpp"
 #include <iostream>
-#include <cstdlib>
-#include <ctime>
 
 //консольный ui
 

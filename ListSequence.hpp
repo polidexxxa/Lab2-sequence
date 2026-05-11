@@ -3,7 +3,6 @@
 
 #include "Sequence.hpp"
 #include "LinkedList.hpp"
-#include "Option.hpp"
 #include "Exceptions.hpp"
 #include <functional>
 
@@ -18,6 +17,22 @@ protected:
         return new ListSequence<T>();
     }
     
+    void AppendInternal(const T& item) override { 
+        list->Append(item); 
+    }
+
+    void PrependInternal(const T& item) override { 
+        list->Prepend(item); 
+    }
+
+    void InsertAtInternal(const T& item, int index) override { 
+        list->InsertAt(item, index); 
+    }
+
+    void SetInternal(int index, const T& item) override {
+        list->GetRef(index) = item;
+    }
+
 public:
     ListSequence(T* items, int count) {
         this->list = new LinkedList<T>(items, count);
@@ -65,22 +80,6 @@ public:
 
     int GetLength() const override {
         return list->GetLength();
-    }
-
-    void AppendInternal(const T& item) override { 
-        list->Append(item); 
-    }
-
-    void PrependInternal(const T& item) override { 
-        list->Prepend(item); 
-    }
-
-    void InsertAtInternal(const T& item, int index) override { 
-        list->InsertAt(item, index); 
-    }
-
-    void SetInternal(int index, const T& item) override {
-        list->GetRef(index) = item;
     }
 
     const LinkedList<T>& GetInternalList() const {

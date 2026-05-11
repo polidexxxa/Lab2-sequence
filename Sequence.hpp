@@ -11,6 +11,11 @@ class Sequence {
 protected:
     virtual Sequence<T>* CreateEmptySameType() const = 0;
 
+    virtual void AppendInternal(const T& item) = 0;
+    virtual void PrependInternal(const T& item) = 0;
+    virtual void InsertAtInternal(const T& item, int index) = 0;
+    virtual void SetInternal(int index, const T& item) = 0;
+
 public:
     virtual ~Sequence() = default;
      
@@ -40,11 +45,6 @@ public:
         return target;
     }
     
-    virtual void AppendInternal(const T& item) = 0;
-    virtual void PrependInternal(const T& item) = 0;
-    virtual void InsertAtInternal(const T& item, int index) = 0;
-    virtual void SetInternal(int index, const T& item) = 0;
-
     virtual T GetFirst() const = 0;
     virtual T GetLast() const = 0;
     virtual T Get(int index) const = 0;
